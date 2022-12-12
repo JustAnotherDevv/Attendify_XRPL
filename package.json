@@ -1,0 +1,20 @@
+{
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "https": "^1.0.0",
+    "ipfs-http-client": "^59.0.0",
+    "xrpl": "^2.6.0"
+  },
+  "name": "xrpjl_nft_ui_server",
+  "version": "1.0.0",
+  "description": "server for easy creation of multiple NFTs in web browser on XRP ledger",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "build": "node index.js"
+  },
+  "author": "Daniel",
+  "license": "ISC"
+}
