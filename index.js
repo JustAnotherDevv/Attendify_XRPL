@@ -4,16 +4,16 @@ const xrpl = require("xrpl");
 require("dotenv").config();
 const https = require("https");
 //import { create, IPFSHTTPClient } from "ipfs-http-client";
-const ipfsClient = require("ipfs-http-client");
+//const ipfsClient = require("ipfs-http-client");
 
 const postToIPFS = async (data) => {
+  const { create } = await import("ipfs-http-client");
   let ipfs;
   let path = "";
   try {
     const authorization =
-      "Basic " +
-      btoa(iprocess.env.INFURA_ID + ":" + iprocess.env.INFURA_SECRET);
-    ipfs = ipfsClient.create({
+      "Basic " + btoa(process.env.INFURA_ID + ":" + process.env.INFURA_SECRET);
+    ipfs = create({
       url: "https://infura-ipfs.io:5001/api/v0",
       headers: {
         authorization,
@@ -25,16 +25,6 @@ const postToIPFS = async (data) => {
     console.error("IPFS error ", error);
   }
   return path;
-};
-
-const metadataFile = "Congrats! You have uploaded your file to IPFS!";
-
-const options = {
-  host: "ipfs.infura.io",
-  port: 5001,
-  path: `https://ipfs.infura.io:5001/api/v0/add?file=${metadataFile}`, //"/api/v0/pin/add?arg=QmeGAVddnBSnKc1DLE7DLV9uuTqo5F7QbaveTjr45JUdQn",
-  method: "POST",
-  auth: projectId + ":" + projectSecret,
 };
 
 const app = express();
@@ -121,13 +111,13 @@ async function batchMint(
   const vault_wallet = fund_result.wallet;
   console.log(vault_wallet);
 
-  const customData = {
+  /*const customData = {
     title: title,
     description: description,
     collectionSize: nftokenCount,
     location: location,
     date: new Date().toLocaleDateString().toString(),
-  };
+  };*/
 
   //----------------- Get account information, particularly the Sequence number.
 
@@ -309,7 +299,21 @@ async function createSellOffer(buyerseed, sellerseed, TokenID) {
 
 app.get("/api/mint", (req, res) => {
   (async () => {
-    const { walletAddress, tokenCount, url } = await req.query;
+    const { walletAddress, tokenCount, url, title, desc, loc } =
+      await req.query;
+
+    let metadataStructure = {
+      title: title,
+      description: desc,
+      collectionSize: tokenCount,
+      location: loc,
+      date: new Date().toLocaleDateString().toString(),
+      URI: url,
+    };
+
+    console.log(
+      await (await postToIPFS(JSON.stringify(metadataStructure))).substring(21)
+    );
 
     return res.send({
       result: await batchMint(
@@ -436,24 +440,18 @@ app.get("/api/checkClaims", (req, res) => {
 });
 
 app.get("/api/getMyNfts", (req, res) => {
-  const { walletAddress } = req.query;
   (async () => {
-    var dict = {
-      one: [15, 4.5],
-      two: [34, 3.3],
-      three: [67, 5.0],
-      four: [32, 4.1],
-    };
-    var dictstring = await JSON.stringify(dict);
+    const { walletAddress } = req.query;
+    return res.send(await getBatchNFTokens(walletAddress));
+  })();
+});
 
-    console.log(
-      await postToIPFS(
-        JSON.stringify({
-          description: "test 1",
-        })
-      )
-    );
-
+app.post("/api/getMyNfts", (req, res) => {
+  (async () => {
+    console.log("post request");
+    const { walletAddress } = await req.query;
+    console.log(req.body, req.file);
+    //console.log(await postToIPFS(image));
     return res.send(await getBatchNFTokens(walletAddress));
   })();
 });

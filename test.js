@@ -1,6 +1,7 @@
 const xrpl = require("xrpl");
 // In browsers, use a <script> tag. In Node.js, uncomment the following line:
 // const xrpl = require('xrpl')
+const { ipfsClient, globSource, create } = require("ipfs-http-client");
 
 // Wrap code in an async function so we can use await
 async function main() {
