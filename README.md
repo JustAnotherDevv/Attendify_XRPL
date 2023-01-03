@@ -16,6 +16,8 @@ This repository contains just server for the project, for the frontend see [this
 
 ## How to setup
 
--execute `npm i` in CLI
--copy .env.example content to .env file and fill with your data and API keys
--execute `npm run start` in CLI
+⚫execute `npm i` in CLI
+
+⚫copy .env.example content to .env file and fill with your data and API keys
+
+⚫execute `npm run start` in CLI
