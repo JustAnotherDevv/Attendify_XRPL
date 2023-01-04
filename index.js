@@ -12,11 +12,7 @@ const {
 const { postToIPFS, ascii_to_hexa } = require("./helpers");
 
 const app = express();
-const port = 4000;
 let AttendifyLib = new Attendify();
-app.listen(port, () => {
-  console.log(`XRPL Attendify server listening on port ${port}`);
-});
 
 /**
  * Creating new event
@@ -25,8 +21,10 @@ app.listen(port, () => {
 app.get("/api/mint", (req, res) => {
   (async () => {
     try {
+      //throw new Error(`${ERR_PARAMS}`);
       const { walletAddress, tokenCount, url, title, desc, loc } =
         await req.query;
+      console.log({ walletAddress, tokenCount, url, title, desc, loc });
       if (
         walletAddress.length == 0 ||
         tokenCount.length == 0 ||
@@ -38,6 +36,7 @@ app.get("/api/mint", (req, res) => {
       )
         throw new Error(`${ERR_PARAMS}`);
 
+      console.log("uploading data");
       let metadataStructure = {
         title: title,
         description: desc,
@@ -47,9 +46,7 @@ app.get("/api/mint", (req, res) => {
         URI: url,
       };
 
-      const metadata = await await postToIPFS(
-        JSON.stringify(metadataStructure)
-      ); //.substring(21);
+      const metadata = await postToIPFS(JSON.stringify(metadataStructure)); //.substring(21);
 
       console.log(metadata);
 
@@ -254,3 +251,21 @@ app.get("/api/getNewAccount", (req, res) => {
     }
   })();
 });
+
+app.get("/", (req, res) => {
+  res.status(200).send("Hello World!");
+});
+
+app.get("/users", function (req, res) {
+  res.json({ users: "allUsers" });
+
+  // Real code from my application below
+  //  model.User.findAll().then (users => {
+  //        res.status(200).json({ users });
+  //     }).catch(error=>{
+  //        console.log(error)
+  //        req.status(500).send(error)
+  //  })
+});
+
+module.exports = app;
