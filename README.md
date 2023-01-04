@@ -11,14 +11,13 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
 
 ⚫ Checking if it's possible to claim NFTs for particular event
 
-⚫ Requresting claim for NFT from particular event. The new sell offer for NFT that has to be accepted by the user is returned
+⚫ Requesting claim for NFT from particular event. The new sell offer for NFT that has to be accepted by the user is returned
 
 ⚫ Event attendees lookup
 
 ⚫ NFT ownership verification
 
 ## ToDo
-⚫ Tests
 
 ⚫ Whitelist system
 
