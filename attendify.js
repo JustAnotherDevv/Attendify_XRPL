@@ -1,10 +1,10 @@
-const express = require("express");
 const xrpl = require("xrpl");
+const verifySignature = require("verify-xrpl-signature").verifySignature;
 require("dotenv").config();
 
-/*
-  ERROR CODES
-*/
+/**
+ * ERROR CODES
+ */
 const ERR_NOT_FOUND = 404; //  Returned when requested resource was not found
 const ERR_PARAMS = 100; // Returned when incorrect params were provided or when some required params were null
 const ERR_IPFS = 101; // Returned if there was problem with IPFS upload
@@ -13,6 +13,7 @@ const ERR_ATTENDIFY = 103; // Custom unexpected error related to Attendify libra
 
 /**
  * Attendify is API library for proof of attendance infrastructure on XRPL
+ * Currently allows for creation of new claim events, checking whether claim is possible, claiming, verifying NFT ownership and fetching lsit of participants for particular event
  * @author JustAnotherDevv
  * @version 1.1.0
  */
@@ -96,6 +97,7 @@ class Attendify {
    * * to claim are done outside of this class in related API route
    * @ToDo Whitelist system to only allow claiming from certain adresses
    * @ToDo Deadline system where NFTs can only be claimed before the event ends
+   * @ToDo Return previously created offer for user that's already event participant
    * @param {string} buyer - wallet address of user trying to claim NFT
    * @param {string} sellerseed - seed of wallet storing NFTs from selected event
    * @param {string} TokenID - ID for NFT that should be claimed
@@ -143,7 +145,7 @@ class Attendify {
    * @ToDo Currently there is new temporary wallet created for each event. Eventually it should be possible to give ownership of this wallet to owner of event
    * @ToDo In the future it should be possible for owner to edit details for event after proving ownership of his wallet by signing a message
    * @param {string} walletAddress - Account of user requesting creation of event
-   * @param {integer} nftokenCount
+   * @param {integer} nftokenCount - Amount of NFTs that should be minted for event
    * @param {string} url - IPFS hash with metadata for NFT
    * @param {string} title - name of event
    * @returns
@@ -221,6 +223,66 @@ class Attendify {
       });
       await this.claimableAdresses.push(vaultWallet);
       return this.claimable[curentEventId];
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+  }
+
+  /**
+   * Verifies whether or not walletAddress account is owner of NFT with nftId
+   * * Wallet from signature has to match walletAddress
+   * @param {string} walletAddress - Address of wallet for the user wanting to verify
+   * @param {string} nftId - id of NFT for which ownership should be verified
+   * @param {string} signture - Signature that should be signed by the same account as walletAddress
+   * @returns {boolean} Depending on whether or not walletAddress is owner of the NFT
+   */
+  async verifyOwnership(walletAddress, nftId, signture) {
+    try {
+      if (!walletAddress || !nftId || !signture)
+        throw new Error(`${ERR_PARAMS}`);
+      const verifySignatureResult = verifySignature(signture);
+      // Checking if signature is valid and if user from signature is walletAddress
+      if (
+        verifySignatureResult.signatureValid != true ||
+        verifySignatureResult.signedBy != walletAddress
+      )
+        throw new Error(`${ERR_PARAMS}`);
+      let NftToVerify;
+      // Getting user NFTs
+      const accountNfts = await (
+        await this.getBatchNFTokens(walletAddress)
+      ).result.account_nfts;
+      if (accountNfts.length == 0) return false;
+      for (let i = 0; i != accountNfts.length; i++) {
+        if (accountNfts[i].NFTokenID == nftId) {
+          NftToVerify = accountNfts[i];
+          return true;
+        }
+        if (i == accountNfts.length - 1) return false;
+      }
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
+  }
+
+  /**
+   * Looks up the list of users that started process of claiming the NFT
+   * @ToDo Add permissions to configure who can access the list of participants
+   * @param {string} eventId - Id of selected claim event
+   * @returns {array} selectedClaimEvent.participants - List of users that requested to participate in event
+   */
+  async attendeesLookup(eventId) {
+    try {
+      if (!eventId) throw new Error(`${ERR_PARAMS}`);
+      // Find selected event
+      let selectedClaimEvent = this.claimable.find((obj) => {
+        return this.claimableAdresses[obj.account].classicAddress == eventId;
+      });
+      if (!selectedClaimEvent) throw new Error(`${ERR_ATTENDIFY}`);
+      // Retrieve and return participants from claimable array
+      return selectedClaimEvent.participants;
     } catch (error) {
       console.error(error);
       return error;

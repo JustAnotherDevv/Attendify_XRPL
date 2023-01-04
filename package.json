@@ -4,6 +4,7 @@
     "express": "^4.18.2",
     "https": "^1.0.0",
     "ipfs-http-client": "^59.0.0",
+    "verify-xrpl-signature": "^0.4.1",
     "xrpl": "^2.6.0"
   },
   "name": "xrpjl_nft_ui_server",

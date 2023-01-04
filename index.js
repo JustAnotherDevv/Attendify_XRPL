@@ -192,6 +192,51 @@ app.get("/api/checkClaims", (req, res) => {
 });
 
 /**
+ * Verifies ownership of event NFT for particular user
+ */
+app.get("/api/verifyOwnership", (req, res) => {
+  (async () => {
+    try {
+      const { walletAddress, id, signature } = await req.query;
+      if (walletAddress.length == 0 || signature.length == 0 || id.length == 0)
+        throw new Error(`${ERR_PARAMS}`);
+      return res.send({
+        result: await AttendifyLib.verifyOwnership(
+          walletAddress,
+          id,
+          signature
+        ),
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        statusText: `${error}`,
+      });
+    }
+  })();
+});
+
+/**
+ * Looks up attendees for particular event
+ */
+app.get("/api/attendees", (req, res) => {
+  (async () => {
+    try {
+      const { id } = await req.query;
+      if (id.length == 0) throw new Error(`${ERR_PARAMS}`);
+      return res.send({
+        result: await AttendifyLib.attendeesLookup(id),
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({
+        statusText: `${error}`,
+      });
+    }
+  })();
+});
+
+/**
  * Creates new account for the end user
  * * Currently used with my UI for testing purposes
  */
