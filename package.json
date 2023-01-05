@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "axios": "^1.2.2",
+    "chai": "^4.3.7",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "https": "^1.0.0",
@@ -12,7 +14,7 @@
   "description": "server for easy creation of multiple NFTs in web browser on XRP ledger",
   "main": "index.js",
   "scripts": {
-    "test": "jest --testTimeout=60000",
+    "test": "mocha",
     "start": "nodemon server.js",
     "build": "node server.js"
   },

@@ -15,7 +15,7 @@ const ERR_ATTENDIFY = 103; // Custom unexpected error related to Attendify libra
  * Attendify is API library for proof of attendance infrastructure on XRPL
  * Currently allows for creation of new claim events, checking whether claim is possible, claiming, verifying NFT ownership and fetching lsit of participants for particular event
  * @author JustAnotherDevv
- * @version 1.1.2
+ * @version 1.1.3
  */
 class Attendify {
   /**
@@ -36,7 +36,7 @@ class Attendify {
    */
   async getAccountFromSeed(seed) {
     try {
-      if (seed == null) throw new Error(`${ERR_PARAMS}`);
+      if (!seed) throw new Error(`${ERR_PARAMS}`);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
       let newWallet = await xrpl.Wallet.fromSeed(seed);
@@ -74,7 +74,7 @@ class Attendify {
    */
   async getBatchNFTokens(address) {
     try {
-      if (address == null) throw new Error(`${ERR_PARAMS}`);
+      if (!address) throw new Error(`${ERR_PARAMS}`);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
 
@@ -105,8 +105,7 @@ class Attendify {
    */
   async createSellOfferForClaim(buyer, sellerseed, TokenID) {
     try {
-      if (buyer == null || sellerseed == null || TokenID == null)
-        throw new Error(`${ERR_PARAMS}`);
+      if (!buyer || !sellerseed || !TokenID) throw new Error(`${ERR_PARAMS}`);
       const seller = xrpl.Wallet.fromSeed(sellerseed);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
@@ -152,12 +151,7 @@ class Attendify {
    */
   async batchMint(walletAddress, nftokenCount, url, title) {
     try {
-      if (
-        walletAddress == null ||
-        nftokenCount == null ||
-        url == null ||
-        title == null
-      )
+      if (!walletAddress || !nftokenCount || !url || !title)
         throw new Error(`${ERR_PARAMS}`);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
@@ -278,7 +272,7 @@ class Attendify {
       if (!eventId) throw new Error(`${ERR_PARAMS}`);
       // Find selected event
       let selectedClaimEvent = this.claimable.find((obj) => {
-        return this.claimableAdresses[obj.account].classicAddress == eventId;
+        return this.claimableAdresses[obj.id].classicAddress == eventId;
       });
       if (!selectedClaimEvent) throw new Error(`${ERR_ATTENDIFY}`);
       // Retrieve and return participants from claimable array

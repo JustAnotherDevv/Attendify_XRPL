@@ -21,7 +21,6 @@ let AttendifyLib = new Attendify();
 app.get("/api/mint", (req, res) => {
   (async () => {
     try {
-      //throw new Error(`${ERR_PARAMS}`);
       const { walletAddress, tokenCount, url, title, desc, loc } =
         await req.query;
       console.log({ walletAddress, tokenCount, url, title, desc, loc });
@@ -78,7 +77,7 @@ app.get("/api/claim", (req, res) => {
       if (walletAddress.length == 0 || id.length == 0)
         throw new Error(`${ERR_PARAMS}`);
       let requestedClaim = AttendifyLib.claimable.find((obj) => {
-        return AttendifyLib.claimableAdresses[obj.account].classicAddress == id;
+        return AttendifyLib.claimableAdresses[obj.id].classicAddress == id;
       });
       console.log(requestedClaim);
 
@@ -144,52 +143,53 @@ app.get("/api/checkClaims", (req, res) => {
       const { walletAddress, id } = await req.query;
       if (walletAddress.length == 0 || id.length == 0)
         throw new Error(`${ERR_PARAMS}`);
+      let requestedClaim = AttendifyLib.claimable.find((obj) => {
+        return AttendifyLib.claimableAdresses[obj.id].classicAddress == id;
+      });
+
+      //Check if the requested claim event exists
+      if (!requestedClaim) {
+        return res.send({
+          status: "404",
+          result: "The requested claim event does not exist.",
+        });
+      }
+
+      // Check if user already claimed NFT
+      if (
+        requestedClaim.participants.find((obj) => {
+          return obj === walletAddress;
+        }) != undefined
+      )
+        return res.send({
+          status: "claimed",
+          result: requestedClaim,
+        });
+
+      //Check if there are any remaining NFTs
+      if (requestedClaim.remaining <= 0) {
+        return res.send({
+          status: "empty",
+          result: requestedClaim,
+        });
+      }
+
+      return res.send({
+        status: "success",
+        result: requestedClaim,
+      });
     } catch (error) {
       console.error(error);
       res.status(500).send({
         statusText: `${error}`,
       });
     }
-    let requestedClaim = AttendifyLib.claimable.find((obj) => {
-      return AttendifyLib.claimableAdresses[obj.account] == id;
-    });
-
-    //Check if the requested claim event exists
-    if (!requestedClaim) {
-      return res.send({
-        status: "404",
-        result: "The requested claim event does not exist.",
-      });
-    }
-
-    // Check if user already claimed NFT
-    if (
-      requestedClaim.participants.find((obj) => {
-        return obj === walletAddress;
-      }) != undefined
-    )
-      return res.send({
-        status: "claimed",
-        result: requestedClaim,
-      });
-
-    //Check if there are any remaining NFTs
-    if (requestedClaim.remaining <= 0) {
-      return res.send({
-        status: "empty",
-        result: requestedClaim,
-      });
-    }
-
-    return res.send({
-      status: "success",
-      result: requestedClaim,
-    });
   })();
 });
 
 /**
- * Verifies ownership of event NFT for particular user
+ * Verifies ownership of NFT with provided id for particular user
+ * Signature has to match with walletAddress account
  */
 app.get("/api/verifyOwnership", (req, res) => {
   (async () => {
@@ -250,22 +250,6 @@ app.get("/api/getNewAccount", (req, res) => {
       });
     }
   })();
-});
-
-app.get("/", (req, res) => {
-  res.status(200).send("Hello World!");
-});
-
-app.get("/users", function (req, res) {
-  res.json({ users: "allUsers" });
-
-  // Real code from my application below
-  //  model.User.findAll().then (users => {
-  //        res.status(200).json({ users });
-  //     }).catch(error=>{
-  //        console.log(error)
-  //        req.status(500).send(error)
-  //  })
 });
 
 module.exports = app;
