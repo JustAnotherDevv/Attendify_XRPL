@@ -27,17 +27,27 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
 ### REST API endpoints
 
 ⚫ `/api/mint` - Creates new claimable event and premints NFTs for it
+
 **@param {string} walletAddress** - Wallet address from user requesting claim
+
 **@param {integer} tokenCount** - Amount of NFTs that should be create for the event
+
 **@param {string} url** - Url to Image for event | Preferably this should be stored on IPFS
+
 **@param {string} title** - Title for event
+
 **@param {string} desc** - Description of event
+
 **@param {string} loc** - Location of event
 
 ⚫ `/api/claim` - Checks if user is eligible for NFT claim or creates new offer that allows for claiming NFT for specific event
+
 **@param {string} walletAddress** - Wallet address from user requesting claim
+
 **@param {string} id** - ID of checked event
+
 **@param {boolean} onlyCheckStatus** - Indicated whether or not endpoint should just check user's eligibility status instead of creating new offer for NFT from event
+
 **Possible responses**
 
     -`404` - Event with specified ID does not exist
@@ -51,11 +61,15 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
     -`transferred` - Indicates that new sell offer for NFT related to selected event was created successfully and details were sent to user
 
 ⚫ `/api/verifyOwnership` - Verifies whether or not user actually owns specififed NFT
+
 **@param {string} walletAddress** - Wallet address from user requesting verification
+
 **@param {string} id** - ID of NFT for which ownership should be checked
+
 **@param {string} signature** - Signature from requesting user
 
 ⚫ `/api/attendees` - Looks up attendees for event with specific id
+
 **@param {string} id** - ID of checked event
 
 ## ToDo
