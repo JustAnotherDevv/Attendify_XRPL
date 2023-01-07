@@ -1,21 +1,19 @@
 const xrpl = require("xrpl");
 const verifySignature = require("verify-xrpl-signature").verifySignature;
 require("dotenv").config();
-
-/**
- * ERROR CODES
- */
-const ERR_NOT_FOUND = 404; //  Returned when requested resource was not found
-const ERR_PARAMS = 100; // Returned when incorrect params were provided or when some required params were null
-const ERR_IPFS = 101; // Returned if there was problem with IPFS upload
-const ERR_XRPL = 102; // Returned if there was problem connecting to XRPL or querrying required data from it
-const ERR_ATTENDIFY = 103; // Custom unexpected error related to Attendify library
+const {
+  ERR_ATTENDIFY,
+  ERR_IPFS,
+  ERR_NOT_FOUND,
+  ERR_PARAMS,
+  ERR_XRPL,
+} = require("./utils");
 
 /**
  * Attendify is API library for proof of attendance infrastructure on XRPL
  * Currently allows for creation of new claim events, checking whether claim is possible, claiming, verifying NFT ownership and fetching lsit of participants for particular event
  * @author JustAnotherDevv
- * @version 1.1.3
+ * @version 1.1.4
  */
 class Attendify {
   /**
@@ -228,14 +226,14 @@ class Attendify {
    * * Wallet from signature has to match walletAddress
    * @param {string} walletAddress - Address of wallet for the user wanting to verify
    * @param {string} nftId - id of NFT for which ownership should be verified
-   * @param {string} signture - Signature that should be signed by the same account as walletAddress
+   * @param {string} signature - Signature that should be signed by the same account as walletAddress
    * @returns {boolean} Depending on whether or not walletAddress is owner of the NFT
    */
-  async verifyOwnership(walletAddress, nftId, signture) {
+  async verifyOwnership(walletAddress, nftId, signature) {
     try {
-      if (!walletAddress || !nftId || !signture)
+      if (!walletAddress || !nftId || !signature)
         throw new Error(`${ERR_PARAMS}`);
-      const verifySignatureResult = verifySignature(signture);
+      const verifySignatureResult = verifySignature(signature);
       // Checking if signature is valid and if user from signature is walletAddress
       if (
         verifySignatureResult.signatureValid != true ||
@@ -286,9 +284,4 @@ class Attendify {
 
 module.exports = {
   Attendify,
-  ERR_ATTENDIFY,
-  ERR_IPFS,
-  ERR_NOT_FOUND,
-  ERR_PARAMS,
-  ERR_XRPL,
 };

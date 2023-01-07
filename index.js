@@ -1,15 +1,16 @@
 const express = require("express");
 const xrpl = require("xrpl");
 require("dotenv").config();
+const { Attendify } = require("./attendify");
 const {
-  Attendify,
+  postToIPFS,
+  ascii_to_hexa,
   ERR_ATTENDIFY,
   ERR_IPFS,
   ERR_NOT_FOUND,
   ERR_PARAMS,
   ERR_XRPL,
-} = require("./attendify");
-const { postToIPFS, ascii_to_hexa } = require("./helpers");
+} = require("./utils");
 
 const app = express();
 let AttendifyLib = new Attendify();
@@ -73,8 +74,12 @@ app.get("/api/mint", (req, res) => {
 app.get("/api/claim", (req, res) => {
   (async () => {
     try {
-      const { walletAddress, id } = await req.query;
-      if (walletAddress.length == 0 || id.length == 0)
+      const { walletAddress, id, onlyCheckStatus } = await req.query;
+      if (
+        walletAddress.length == 0 ||
+        id.length == 0 ||
+        onlyCheckStatus.length == 0
+      )
         throw new Error(`${ERR_PARAMS}`);
       let requestedClaim = AttendifyLib.claimable.find((obj) => {
         return AttendifyLib.claimableAdresses[obj.id].classicAddress == id;
@@ -108,23 +113,30 @@ app.get("/api/claim", (req, res) => {
         });
       }
 
-      await AttendifyLib.claimable[requestedClaim.id].remaining--;
-      AttendifyLib.claimable[requestedClaim.id].participants.push(
-        walletAddress
-      );
-      const claimableToken = await (
-        await AttendifyLib.getBatchNFTokens(id)
-      ).result.account_nfts[0].NFTokenID;
-      console.log(claimableToken);
-      return res.send({
-        status: "transferred",
-        result: requestedClaim,
-        claimed: await AttendifyLib.createSellOfferForClaim(
-          walletAddress,
-          AttendifyLib.claimableAdresses[requestedClaim.id].seed,
-          claimableToken
-        ),
-      });
+      if (onlyCheckStatus) {
+        return res.send({
+          status: "success",
+          result: requestedClaim,
+        });
+      } else {
+        await AttendifyLib.claimable[requestedClaim.id].remaining--;
+        AttendifyLib.claimable[requestedClaim.id].participants.push(
+          walletAddress
+        );
+        const claimableToken = await (
+          await AttendifyLib.getBatchNFTokens(id)
+        ).result.account_nfts[0].NFTokenID;
+        console.log(claimableToken);
+        return res.send({
+          status: "transferred",
+          result: requestedClaim,
+          claimed: await AttendifyLib.createSellOfferForClaim(
+            walletAddress,
+            AttendifyLib.claimableAdresses[requestedClaim.id].seed,
+            claimableToken
+          ),
+        });
+      }
     } catch (error) {
       console.error(error);
       res.status(500).send({
@@ -137,7 +149,7 @@ app.get("/api/claim", (req, res) => {
 /**
  * Checks whether or not requested user is eligible for the claim, if the event exists and if there are still any NFTs left
  */
-app.get("/api/checkClaims", (req, res) => {
+/*app.get("/api/checkClaims", (req, res) => {
   (async () => {
     try {
       const { walletAddress, id } = await req.query;
@@ -185,7 +197,7 @@ app.get("/api/checkClaims", (req, res) => {
       });
     }
   })();
-});
+});*/
 
 /**
  * Verifies ownership of NFT with provided id for particular user
