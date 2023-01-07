@@ -38,6 +38,17 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
 **@param {string} walletAddress** - Wallet address from user requesting claim
 **@param {string} id** - ID of checked event
 **@param {boolean} onlyCheckStatus** - Indicated whether or not endpoint should just check user's eligibility status instead of creating new offer for NFT from event
+**Possible responses**
+
+    -`404` - Event with specified ID does not exist
+
+    -`claimed` - The NFT for specified event was already claimed by this user
+
+    -`empty` - All NFTs for this particular event were already claimed
+
+    -`success` - If `onlyCheckStatus` parameter was true it indicated that current parameters for selected event were sent
+
+    -`transferred` - Indicates that new sell offer for NFT related to selected event was created successfully and details were sent to user
 
 ⚫ `/api/verifyOwnership` - Verifies whether or not user actually owns specififed NFT
 **@param {string} walletAddress** - Wallet address from user requesting verification
