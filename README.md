@@ -26,7 +26,7 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
 
 ### REST API endpoints
 
-⚫ `/api/mint` - Creates new claimable event and premints NFTs for it
+⚫ `/api/mint` - Creates new claimable event and premints NFTs for it. You must have at least X XRP in order to use this to handle the reserve requirements for the NFTs and the minting process which uses [Tickets](https://xrpl.org/tickets.html), where X is amount of tokens that should be minted + additional XRP for feees.
 
 **@param {string} walletAddress** - Wallet address from user requesting claim
 
@@ -40,7 +40,7 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
 
 **@param {string} loc** - Location of event
 
-⚫ `/api/claim` - Checks if user is eligible for NFT claim or creates new offer that allows for claiming NFT for specific event
+⚫ `/api/claim` - Checks if user is eligible for NFT claim or creates new offer that allows for claiming NFT for specific event. Endpoint returns response with sellOfferID that has to be accepted by user afterwards.
 
 **@param {string} walletAddress** - Wallet address from user requesting claim
 

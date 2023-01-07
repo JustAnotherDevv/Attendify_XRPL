@@ -13,7 +13,7 @@ const {
  * Attendify is API library for proof of attendance infrastructure on XRPL
  * Currently allows for creation of new claim events, checking whether claim is possible, claiming, verifying NFT ownership and fetching lsit of participants for particular event
  * @author JustAnotherDevv
- * @version 1.1.4
+ * @version 1.1.5
  */
 class Attendify {
   /**
@@ -68,20 +68,34 @@ class Attendify {
    * Checks for all NFTs owned by particular address
    * If account does not have any NFTs empty array is returned
    * @param {string} address - Wallet which should checked
-   * @returns {array} nfts - List of NFTs owned by this address
+   * @returns {object} nfts - Object with a List of NFTs owned by given address
    */
   async getBatchNFTokens(address) {
     try {
       if (!address) throw new Error(`${ERR_PARAMS}`);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
-
       let nfts = await client.request({
         method: "account_nfts",
         account: address,
       });
+      let accountNfts = nfts.result.account_nfts;
+      console.log(nfts);
+      console.log(accountNfts.length);
+      for (;;) {
+        if (nfts["result"]["marker"] === undefined) {
+          break;
+        } else {
+          nfts = await client.request({
+            method: "account_nfts",
+            account: address,
+            marker: nfts["result"]["marker"],
+          });
+          accountNfts = accountNfts.concat(nfts.result.account_nfts);
+        }
+      }
       client.disconnect();
-      return nfts;
+      return accountNfts;
     } catch (error) {
       console.error(error);
       return error;
@@ -155,51 +169,95 @@ class Attendify {
       await client.connect();
       const fund_result = await client.fundWallet();
       const vaultWallet = fund_result.wallet;
-      // Get account information, particularly the Sequence number.
-      const account_info = await client.request({
-        command: "account_info",
-        account: vaultWallet.address,
-      });
-      let my_sequence = account_info.result.account_data.Sequence;
-      // Create the transaction hash.
-      const ticketTransaction = await client.autofill({
-        TransactionType: "TicketCreate",
-        Account: vaultWallet.address,
-        TicketCount: nftokenCount,
-        Sequence: my_sequence,
-      });
-      // Sign the transaction.
-      const signedTransaction = vaultWallet.sign(ticketTransaction);
-      // Submit the transaction and wait for the result.
-      const tx = await client.submitAndWait(signedTransaction.tx_blob);
-      let response = await client.request({
-        command: "account_objects",
-        account: vaultWallet.address,
-        type: "ticket",
-      });
-      // Populate the tickets array variable.
-      let tickets = [];
-      for (let i = 0; i < nftokenCount; i++) {
-        tickets[i] = response.result.account_objects[i].TicketSequence;
-      }
-      // Mint NFTokens
-      const curentEventId = this.claimable.length;
-      for (let i = 0; i < nftokenCount; i++) {
-        const transactionBlob = {
-          TransactionType: "NFTokenMint",
-          Account: vaultWallet.classicAddress,
-          URI: xrpl.convertStringToHex(url),
-          Flags: parseInt(9),
-          TransferFee: parseInt(0),
-          Sequence: 0,
-          TicketSequence: tickets[i],
-          LastLedgerSequence: null,
-          NFTokenTaxon: curentEventId,
-        };
-        // Submit signed blob.
-        const tx = await client.submitAndWait(transactionBlob, {
-          wallet: vaultWallet,
+      let curentEventId;
+      let remainingTokensBeforeTicketing = nftokenCount;
+      console.log("a");
+      for (let currentTickets; remainingTokensBeforeTicketing != 0; ) {
+        console.log("b, ", remainingTokensBeforeTicketing);
+        console.log(
+          "current tickets ",
+          await client.request({
+            command: "account_objects",
+            account: vaultWallet.address,
+            type: "ticket",
+          })
+        );
+        if (remainingTokensBeforeTicketing > 250) {
+          currentTickets = 250;
+        } else {
+          currentTickets = remainingTokensBeforeTicketing;
+        }
+        // Get account information, particularly the Sequence number.
+        const account_info = await client.request({
+          command: "account_info",
+          account: vaultWallet.address,
         });
+        let my_sequence = account_info.result.account_data.Sequence;
+        // Create the transaction hash.
+        console.log("b, ", currentTickets);
+        const ticketTransaction = await client.autofill({
+          TransactionType: "TicketCreate",
+          Account: vaultWallet.address,
+          TicketCount: currentTickets,
+          Sequence: my_sequence,
+        });
+        // Sign the transaction.
+        const signedTransaction = vaultWallet.sign(ticketTransaction);
+        // Submit the transaction and wait for the result.
+        const tx = await client.submitAndWait(signedTransaction.tx_blob);
+        let res = await client.request({
+          command: "account_objects",
+          account: vaultWallet.address,
+          type: "ticket",
+        });
+        let resTickets = res.result.account_objects;
+        console.log(resTickets.length);
+        for (;;) {
+          console.log("marker, ", res["result"]["marker"]);
+          if (res["result"]["marker"] === undefined) {
+            break;
+          }
+
+          res = await client.request({
+            method: "account_objects",
+            account: vaultWallet.address,
+            type: "ticket",
+            marker: res["result"]["marker"],
+          });
+          console.log(res.result.account_objects.length);
+          resTickets = resTickets.concat(res.result.account_objects);
+        }
+        console.log("tickets amount ", resTickets.length);
+        // Populate the tickets array variable.
+        let tickets = [];
+        for (let i = 0; i < currentTickets; i++) {
+          //console.log({ index: i, res: resTickets[i] });
+          tickets[i] = resTickets[i].TicketSequence;
+        }
+        // Mint NFTokens
+        curentEventId = this.claimable.length;
+        for (let i = 0; i < currentTickets; i++) {
+          console.log("minting ", i);
+          const transactionBlob = {
+            TransactionType: "NFTokenMint",
+            Account: vaultWallet.classicAddress,
+            URI: xrpl.convertStringToHex(url),
+            Flags: {
+              tfBurnable: true,
+              tfTransferable: true,
+            },
+            TransferFee: parseInt(0),
+            Sequence: 0,
+            TicketSequence: tickets[i],
+            LastLedgerSequence: null,
+            NFTokenTaxon: curentEventId,
+          };
+          // Submit signed blob.
+          const tx = await client.submitAndWait(transactionBlob, {
+            wallet: vaultWallet,
+          });
+        }
+        remainingTokensBeforeTicketing -= currentTickets;
       }
       client.disconnect();
       // Save the info about newest event in claimable array
@@ -217,7 +275,8 @@ class Attendify {
       return this.claimable[curentEventId];
     } catch (error) {
       console.error(error);
-      return error;
+      throw new Error(error);
+      // return error;
     }
   }
 

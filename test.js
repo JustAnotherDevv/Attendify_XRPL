@@ -44,7 +44,7 @@ describe("Testing typical user flow", function () {
   it("Minting NFTs for new event", async () => {
     return requestWithSupertest
       .get(
-        `/api/mint?walletAddress=${testUser.classicAddress}&tokenCount=10&url=ipfs://QmQDDD1cNgnyhPC4pBLZKhVeu12oyfCAJoWr1Qc1QgbkPN&title=test_title&desc=test_description&loc=Warsaw`
+        `/api/mint?walletAddress=${testUser.classicAddress}&tokenCount=5&url=ipfs://QmQDDD1cNgnyhPC4pBLZKhVeu12oyfCAJoWr1Qc1QgbkPN&title=test_title&desc=test_description&loc=Warsaw`
       )
       .then(async (r) => {
         console.log(JSON.parse(r.text).result);
@@ -54,10 +54,27 @@ describe("Testing typical user flow", function () {
       });
   }).timeout(600000);
 
+  /**
+   * Only uncomment if you want to test minting for 300 NFTs at the same time to see if ticketing and paginating works correctly
+   * * WARNING! It might take a really long time to complete
+  it("Minting NFTs with tokenCount exceding 250", async () => {
+    return requestWithSupertest
+      .get(
+        `/api/mint?walletAddress=${testUser.classicAddress}&tokenCount=300&url=ipfs://QmQDDD1cNgnyhPC4pBLZKhVeu12oyfCAJoWr1Qc1QgbkPN&title=test_title&desc=test_description&loc=Warsaw`
+      )
+      .then(async (r) => {
+        console.log(JSON.parse(r.text).result);
+        testEvent = await JSON.parse(r.text).result;
+        r.res.statusCode.should.equal(200);
+        JSON.parse(r.text).result.should.be.a("object");
+      });
+  }).timeout(6000000);
+  */
+
   it("Checking if it's possible to claim NFT for event", async () => {
     return requestWithSupertest
       .get(
-        `/api/checkClaims?walletAddress=${testUser.classicAddress}&id=${testEvent.account}`
+        `/api/claim?walletAddress=${testUser.classicAddress}&id=${testEvent.account}&onlyCheckStatus=true`
       )
       .then((r) => {
         console.log(JSON.parse(r.text).result);
@@ -70,7 +87,7 @@ describe("Testing typical user flow", function () {
   it("Claiming offer for NFT from event", async () => {
     return requestWithSupertest
       .get(
-        `/api/claim?walletAddress=${testUser.classicAddress}&id=${testEvent.account}`
+        `/api/claim?walletAddress=${testUser.classicAddress}&id=${testEvent.account}&onlyCheckStatus=false`
       )
       .then((r) => {
         console.log(JSON.parse(r.text));
