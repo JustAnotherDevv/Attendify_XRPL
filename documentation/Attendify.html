@@ -30,7 +30,7 @@
     
         <h2><span class="attribs"><span class="type-signature"></span></span>Attendify<span class="signature">()</span><span class="type-signature"></span></h2>
         
-            <div class="class-description">Attendify is API library for proof of attendance infrastructure on XRPLCurrently allows for creation of new claim events, checking whether claim is possible, claiming, verifying NFT ownership and fetching lsit of participants for particular event</div>
+            <div class="class-description">Attendify is API library for proof of attendance infrastructure on XRPLIt allows for creation of new claim events, checking whether claim is possible,claiming, verifying NFT ownership, and fetching list of participants for a particular event</div>
         
     
 </header>
@@ -53,7 +53,7 @@
 
 
 <div class="description">
-    Runs when new instance of Atttendify class is created2 Empty arrays for claimable events and claimable adresses are initiated
+    Initializes a new instance of the Attendify class
 </div>
 
 
@@ -72,7 +72,7 @@
 
     
     <dt class="tag-version">Version:</dt>
-    <dd class="tag-version"><ul class="dummy"><li>1.1.3</li></ul></dd>
+    <dd class="tag-version"><ul class="dummy"><li>1.1.6</li></ul></dd>
     
 
     
@@ -107,7 +107,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line20">line 20</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line21">line 21</a>
     </li></ul></dd>
     
 
@@ -163,7 +163,189 @@
     
 
     
-    <h4 class="name" id="attendeesLookup"><span class="type-signature">(async) </span>attendeesLookup<span class="signature">(eventId)</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="addParticipant"><span class="type-signature">(async) </span>addParticipant<span class="signature">(walletAddress, eventId)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Adds a participant to an event or creates event array for participantsSaves the JSON with participants to local JSON file
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>walletAddress</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The address of the participant's wallet</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>eventId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The ID of the event</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line37">line 37</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - `true` if the participant was added successfully, `false` otherwise
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="attendeesLookup"><span class="type-signature">(async) </span>attendeesLookup<span class="signature">(minter, eventId)</span><span class="type-signature"> &rarr; {Array.&lt;array>}</span></h4>
     
 
     
@@ -207,6 +389,29 @@
 
         <tr>
             
+                <td class="name"><code>minter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The wallet address of the event creator</td>
+        </tr>
+
+    
+
+        <tr>
+            
                 <td class="name"><code>eventId</code></td>
             
 
@@ -223,7 +428,7 @@
 
             
 
-            <td class="description last">Id of selected claim event</td>
+            <td class="description last">ID of selected claim event</td>
         </tr>
 
     
@@ -264,7 +469,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line270">line 270</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line369">line 369</a>
     </li></ul></dd>
     
 
@@ -294,13 +499,69 @@
 
 
 
+<h5>Throws:</h5>
+<ul>
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        If the `minter` or `eventId` parameters are not provided.
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    
+        <li>
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        If the event does not exist
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+</li>
+    </ul>
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    selectedClaimEvent.participants - List of users that requested to participate in event
+    An array of objects with data for users that requested to participate in event
 </div>
 
 
@@ -311,7 +572,7 @@
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">Array.&lt;array></span>
 
 
     </dd>
@@ -329,7 +590,7 @@
     
 
     
-    <h4 class="name" id="batchMint"><span class="type-signature">(async) </span>batchMint<span class="signature">(walletAddress, nftokenCount, url, title)</span><span class="type-signature"> &rarr; {object}</span></h4>
+    <h4 class="name" id="batchMint"><span class="type-signature">(async) </span>batchMint<span class="signature">(walletAddress, nftokenCount, url, title, minterSeed, curentEventId)</span><span class="type-signature"> &rarr; {object}</span></h4>
     
 
     
@@ -337,7 +598,7 @@
 
 
 <div class="description">
-    Mints NFTs for created event and saves data about event to claimable array
+    Mints NFTs for created event and saves IPFS hash with data about event to Uri field
 </div>
 
 
@@ -462,6 +723,52 @@
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>minterSeed</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The seed of the wallet that will be minting the NFTs</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>curentEventId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The event ID of the NFTs. Defaults to the next event ID in the sequence</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -499,7 +806,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line152">line 152</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line219">line 219</a>
     </li></ul></dd>
     
 
@@ -507,15 +814,6 @@
 
     
 
-    
-    <dt class="tag-todo">To Do:</dt>
-    <dd class="tag-todo">
-        <ul>
-            <li>Currently there is new temporary wallet created for each event. Eventually it should be possible to give ownership of this wallet to owner of event</li>
-        
-            <li>In the future it should be possible for owner to edit details for event after proving ownership of his wallet by signing a message</li>
-        </ul>
-    </dd>
     
 </dl>
 
@@ -531,13 +829,42 @@
 
 
 
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        - If any of the required parameters are missing or if there is an issue minting the NFTs
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    claimable[curentEventId] - Contains data related to new event for which NFTs were minted
+    - An object containing the metadata related to new event for which NFTs were minted
 </div>
 
 
@@ -566,7 +893,7 @@
     
 
     
-    <h4 class="name" id="createSellOfferForClaim"><span class="type-signature">(async) </span>createSellOfferForClaim<span class="signature">(buyer, sellerseed, TokenID)</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id="createSellOfferForClaim"><span class="type-signature">(async) </span>createSellOfferForClaim<span class="signature">(buyer, minterSeed, TokenID)</span><span class="type-signature"> &rarr; {object}</span></h4>
     
 
     
@@ -574,7 +901,7 @@
 
 
 <div class="description">
-    Creates offer for NFT from selected eventThe offer has to be accepted by the buyer once it was returned* In current design checks to see whether or not there are still any NFTs* to claim are done outside of this class in related API route
+    Creates a sell offer for NFT from selected eventThe offer has to be accepted by the buyer once it was returned* In current design checks to see whether or not there are still any NFTs* to claim are done outside of this class in related API route
 </div>
 
 
@@ -633,7 +960,7 @@
 
         <tr>
             
-                <td class="name"><code>sellerseed</code></td>
+                <td class="name"><code>minterSeed</code></td>
             
 
             <td class="type">
@@ -713,7 +1040,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line106">line 106</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line140">line 140</a>
     </li></ul></dd>
     
 
@@ -747,172 +1074,42 @@
 
 
 
-
-
-<h5>Returns:</h5>
+<h5>Throws:</h5>
 
         
-<div class="param-desc">
-    offerToAccept - Sell offer for given NFT from selected event
-</div>
-
-
 
 <dl>
     <dt>
-        Type
+        <div class="param-desc">
+        - If any of the required parameters are missing or if there is an issue creating the sell offer
+        </div>
     </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="getAccountFromSeed"><span class="type-signature">(async) </span>getAccountFromSeed<span class="signature">(seed)</span><span class="type-signature"> &rarr; {object}</span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    Generates wallet address details from secret key
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>seed</code></td>
-            
-
-            <td class="type">
-            
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
                 
-<span class="param-type">string</span>
+<span class="param-type">Error</span>
 
 
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Account secret key</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line37">line 37</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
 </dl>
 
 
-
-
-
-
-
-
-
-
-
-
-
+    
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    newWallet - Object with wallet
+    - The metadata of the sell offer for a given NFT from selected event
 </div>
 
 
@@ -941,7 +1138,7 @@
     
 
     
-    <h4 class="name" id="getBatchNFTokens"><span class="type-signature">(async) </span>getBatchNFTokens<span class="signature">(address)</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="getAccountTickets"><span class="type-signature">(async) </span>getAccountTickets<span class="signature">(walletAddress, client)</span><span class="type-signature"> &rarr; {Array.&lt;object>}</span></h4>
     
 
     
@@ -949,7 +1146,7 @@
 
 
 <div class="description">
-    Checks for all NFTs owned by particular addressIf account does not have any NFTs empty array is returned
+    Retrieves a list of all tickets owned by a particular address
 </div>
 
 
@@ -985,7 +1182,7 @@
 
         <tr>
             
-                <td class="name"><code>address</code></td>
+                <td class="name"><code>walletAddress</code></td>
             
 
             <td class="type">
@@ -1001,7 +1198,30 @@
 
             
 
-            <td class="description last">Wallet which should checked</td>
+            <td class="description last">The wallet address to check</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>client</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The XRPL client to use for the request</td>
         </tr>
 
     
@@ -1042,7 +1262,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line75">line 75</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line185">line 185</a>
     </li></ul></dd>
     
 
@@ -1071,7 +1291,7 @@
 
         
 <div class="param-desc">
-    nfts - List of NFTs owned by this address
+    - An array of tickets owned by the given address. If no tickets are found, returns an empty array
 </div>
 
 
@@ -1082,7 +1302,209 @@
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">Array.&lt;object></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="getBatchNFTokens"><span class="type-signature">(async) </span>getBatchNFTokens<span class="signature">(address, taxon<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Array.&lt;object>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Checks for all NFTs owned by a particular address
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>address</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">The wallet address to check</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>taxon</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">An optional parameter used to filter the NFTs by taxon</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line94">line 94</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    - An array of NFTs owned by the given address. If no NFTs are found, returns an empty array
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Array.&lt;object></span>
 
 
     </dd>
@@ -1152,7 +1574,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line58">line 58</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line74">line 74</a>
     </li></ul></dd>
     
 
@@ -1181,7 +1603,7 @@
 
         
 <div class="param-desc">
-    newWallet - Object with new wallet that was created and funded
+    - Object with new wallet that was created and funded
 </div>
 
 
@@ -1210,7 +1632,7 @@
     
 
     
-    <h4 class="name" id="verifyOwnership"><span class="type-signature">(async) </span>verifyOwnership<span class="signature">(walletAddress, nftId, signture)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id="verifyOwnership"><span class="type-signature">(async) </span>verifyOwnership<span class="signature">(walletAddress, signature, minter, eventId)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
     
 
     
@@ -1218,7 +1640,7 @@
 
 
 <div class="description">
-    Verifies whether or not walletAddress account is owner of NFT with nftId* Wallet from signature has to match walletAddress
+    Verifies whether or not walletAddress account is owner of NFT from event with eventId that was issued by wallet that matches minter parameter* Wallet from signature has to match walletAddress
 </div>
 
 
@@ -1277,30 +1699,7 @@
 
         <tr>
             
-                <td class="name"><code>nftId</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">id of NFT for which ownership should be verified</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>signture</code></td>
+                <td class="name"><code>signature</code></td>
             
 
             <td class="type">
@@ -1317,6 +1716,52 @@
             
 
             <td class="description last">Signature that should be signed by the same account as walletAddress</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>minter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The address of the wallet that minted the NFT.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>eventId</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The event ID of the NFT.</td>
         </tr>
 
     
@@ -1357,7 +1802,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line234">line 234</a>
+        <a href="attendify.js.html">attendify.js</a>, <a href="attendify.js.html#line328">line 328</a>
     </li></ul></dd>
     
 
@@ -1386,7 +1831,7 @@
 
         
 <div class="param-desc">
-    Depending on whether or not walletAddress is owner of the NFT
+    Indicats whether the walletAddress owns any NFT from particular event
 </div>
 
 
@@ -1425,13 +1870,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Attendify.html">Attendify</a></li></ul><h3>Global</h3><ul><li><a href="global.html#ERR_NOT_FOUND">ERR_NOT_FOUND</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Attendify.html">Attendify</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Thu Jan 05 2023 03:51:42 GMT+0100 (Central European Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Tue Jan 10 2023 02:40:34 GMT+0100 (Central European Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
