@@ -1,3 +1,4 @@
+require("dotenv").config();
 const xrpl = require("xrpl");
 const app = require("./index.js");
 const supertest = require("supertest");
@@ -6,6 +7,7 @@ const assert = require("assert");
 var should = require("chai").should();
 
 // Mock data for tests
+const minter = xrpl.Wallet.fromSeed(process.env.WALLET_SEED).address;
 const testUser = {
   publicKey:
     "ED3467208169A8978DD8A66D20D95E8AC63DD2B7675A5A072A49C58832F93A7BF0",
@@ -55,7 +57,7 @@ describe("Testing typical user flow", function () {
   }).timeout(600000);
 
   /**
-   * Only uncomment if you want to test minting for 300 NFTs at the same time to see if ticketing and paginating works correctly
+   * * Only uncomment if you want to test minting for 300 NFTs at the same time to see if ticketing and paginating works correctly
    * * WARNING! It might take a really long time to complete
   it("Minting NFTs with tokenCount exceding 250", async () => {
     return requestWithSupertest
@@ -74,12 +76,13 @@ describe("Testing typical user flow", function () {
   it("Checking if it's possible to claim NFT for event", async () => {
     return requestWithSupertest
       .get(
-        `/api/claim?walletAddress=${testUser.classicAddress}&id=${testEvent.account}&onlyCheckStatus=true`
+        `/api/claim?walletAddress=${testUser.classicAddress}&minter=${minter}&eventId=${testEvent.id}&type=1`
       )
       .then((r) => {
-        console.log(JSON.parse(r.text).result);
+        console.log(JSON.parse(r.text).result.length);
         r.res.statusCode.should.equal(200);
-        JSON.parse(r.text).result.should.be.a("object");
+        // JSON.parse(r.text).result.should.be.a("object");
+        JSON.parse(r.text).result.should.be.a("array");
         JSON.parse(r.text).status.should.equal("success");
       });
   }).timeout(600000);
@@ -87,25 +90,26 @@ describe("Testing typical user flow", function () {
   it("Claiming offer for NFT from event", async () => {
     return requestWithSupertest
       .get(
-        `/api/claim?walletAddress=${testUser.classicAddress}&id=${testEvent.account}&onlyCheckStatus=false`
+        `/api/claim?walletAddress=${testUser.classicAddress}&minter=${minter}&eventId=${testEvent.id}&type=2`
       )
       .then((r) => {
-        console.log(JSON.parse(r.text));
-        nftOffer = JSON.parse(r.text).claimed.nft_offer_index;
+        console.log(JSON.parse(r.text).result.length);
+        console.log("offer ", JSON.parse(r.text).offer);
         r.res.statusCode.should.equal(200);
-        JSON.parse(r.text).result.should.be.a("object");
+        // JSON.parse(r.text).result.should.be.a("object");
+        JSON.parse(r.text).result.should.be.a("array");
         JSON.parse(r.text).status.should.equal("transferred");
       });
   }).timeout(600000);
 
   it("Looking up if the test user is on the attendees list for test event", async () => {
     return requestWithSupertest
-      .get(`/api/attendees?id=${testEvent.account}`)
+      .get(`/api/attendees?minter=${minter}&eventId=${testEvent.id}`)
       .then((r) => {
         console.log(JSON.parse(r.text));
         r.res.statusCode.should.equal(200);
         JSON.parse(r.text).result.should.be.a("array");
-        JSON.parse(r.text).result[0].should.equal(testUser.classicAddress);
+        JSON.parse(r.text).result[0].user.should.equal(testUser.classicAddress);
       });
   }).timeout(600000);
 
@@ -125,7 +129,7 @@ describe("Testing typical user flow", function () {
     const signature = await myWallet.sign(txJSON);
     return requestWithSupertest
       .get(
-        `/api/verifyOwnership?walletAddress=${walletForSignatureVerification.classicAddress}&id=${testNftId}&signature=${signature.tx_blob}`
+        `/api/verifyOwnership?walletAddress=${walletForSignatureVerification.classicAddress}&signature=${signature.tx_blob}&minter=raY33uxEbZFg7YS1ofFRioeENLsVdCgpC5&eventId=${testEvent.id}`
       )
       .then((r) => {
         console.log(JSON.parse(r.text));

@@ -1,3 +1,4 @@
+const { NFTokenMintFlags, NFTokenCreateOfferFlags } = require("xrpl");
 const xrpl = require("xrpl");
 const verifySignature = require("verify-xrpl-signature").verifySignature;
 require("dotenv").config();
@@ -8,69 +9,89 @@ const {
   ERR_PARAMS,
   ERR_XRPL,
 } = require("./utils");
+const fs = require("fs");
 
 /**
  * Attendify is API library for proof of attendance infrastructure on XRPL
- * Currently allows for creation of new claim events, checking whether claim is possible, claiming, verifying NFT ownership and fetching lsit of participants for particular event
+ * It allows for creation of new claim events, checking whether claim is possible,
+ * claiming, verifying NFT ownership, and fetching list of participants for a particular event
  * @author JustAnotherDevv
- * @version 1.1.5
+ * @version 1.1.6
  */
 class Attendify {
   /**
-   * Runs when new instance of Atttendify class is created
-   * 2 Empty arrays for claimable events and claimable adresses are initiated
+   * Initializes a new instance of the Attendify class
    */
   constructor() {
-    //list of claimable events, contains metadata, participants, amount of initial and remaining NFTs
-    this.claimable = [];
-    //sensitive data for addresses used for claimable events | SHOULD NEVER BE EXPOSED VIA PUBLIC API TO END USER
-    this.claimableAdresses = [];
+    // Initializes the next event ID to 0
+    this.nextEventId = 0;
   }
 
   /**
-   * Generates wallet address details from secret key
-   * @param {string} seed - Account secret key
-   * @returns {object} newWallet - Object with wallet
+   * Adds a participant to an event or creates event array for participants
+   * Saves the JSON with participants to local JSON file
+   * @param {string} walletAddress - The address of the participant's wallet
+   * @param {number} eventId - The ID of the event
+   * @returns {boolean} - `true` if the participant was added successfully, `false` otherwise
    */
-  async getAccountFromSeed(seed) {
+  async addParticipant(walletAddress, eventId) {
     try {
-      if (!seed) throw new Error(`${ERR_PARAMS}`);
-      const client = new xrpl.Client(process.env.SELECTED_NETWORK);
-      await client.connect();
-      let newWallet = await xrpl.Wallet.fromSeed(seed);
-      //const standby_balance = await client.getXrpBalance(tempWallet.address);
-      client.disconnect();
-      return newWallet;
+      if (eventId == undefined) throw new Error(`${ERR_PARAMS}`);
+      let data = await fs.promises.readFile("participants.json", "utf-8");
+      let participantsJson = JSON.parse(data.toString());
+      console.log(data);
+      if (walletAddress == undefined) {
+        // Pushes an empty array to the participants.json file if no wallet address is provided
+        participantsJson.data.push([]);
+      } else if (participantsJson.data[eventId] == undefined) {
+        // Adds the participant to the event's list of participants and creates and empty array for participants from chosen event
+        participantsJson.data.push([
+          {
+            user: walletAddress,
+          },
+        ]);
+      } else {
+        // Adds the participant to the event's list of participants
+        participantsJson.data[eventId].push({
+          user: walletAddress,
+        });
+      }
+      await fs.promises.writeFile(
+        "participants.json",
+        JSON.stringify(participantsJson)
+      );
+      return true;
     } catch (error) {
       console.error(error);
-      res.status(500).send({
-        statusText: `${error}`,
-      });
+      return error;
     }
   }
 
   /**
    * Creates new XRPL wallet and funds it
-   * @returns {object} newWallet - Object with new wallet that was created and funded
+   * @returns {object} - Object with new wallet that was created and funded
    */
   async getNewAccount() {
-    const client = new xrpl.Client(process.env.SELECTED_NETWORK);
-    await client.connect();
-
-    const fund_result = await client.fundWallet();
-    const newWallet = fund_result.wallet;
-    await client.disconnect();
-
-    return newWallet;
+    try {
+      const client = new xrpl.Client(process.env.SELECTED_NETWORK);
+      await client.connect();
+      const fund_result = await client.fundWallet();
+      const newWallet = fund_result.wallet;
+      await client.disconnect();
+      return newWallet;
+    } catch (error) {
+      console.error(error);
+      return error;
+    }
   }
 
   /**
-   * Checks for all NFTs owned by particular address
-   * If account does not have any NFTs empty array is returned
-   * @param {string} address - Wallet which should checked
-   * @returns {object} nfts - Object with a List of NFTs owned by given address
+   * Checks for all NFTs owned by a particular address
+   * @param {string} address - The wallet address to check
+   * @param {string} [taxon] - An optional parameter used to filter the NFTs by taxon
+   * @returns {object[]} - An array of NFTs owned by the given address. If no NFTs are found, returns an empty array
    */
-  async getBatchNFTokens(address) {
+  async getBatchNFTokens(address, taxon) {
     try {
       if (!address) throw new Error(`${ERR_PARAMS}`);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
@@ -80,8 +101,7 @@ class Attendify {
         account: address,
       });
       let accountNfts = nfts.result.account_nfts;
-      console.log(nfts);
-      console.log(accountNfts.length);
+      console.log("Found ", accountNfts.length, " NFTs in account ", address);
       for (;;) {
         if (nfts["result"]["marker"] === undefined) {
           break;
@@ -95,6 +115,7 @@ class Attendify {
         }
       }
       client.disconnect();
+      if (taxon) return accountNfts.filter((a) => a.NFTokenTaxon == taxon);
       return accountNfts;
     } catch (error) {
       console.error(error);
@@ -103,7 +124,7 @@ class Attendify {
   }
 
   /**
-   * Creates offer for NFT from selected event
+   * Creates a sell offer for NFT from selected event
    * The offer has to be accepted by the buyer once it was returned
    * * In current design checks to see whether or not there are still any NFTs
    * * to claim are done outside of this class in related API route
@@ -111,14 +132,15 @@ class Attendify {
    * @ToDo Deadline system where NFTs can only be claimed before the event ends
    * @ToDo Return previously created offer for user that's already event participant
    * @param {string} buyer - wallet address of user trying to claim NFT
-   * @param {string} sellerseed - seed of wallet storing NFTs from selected event
+   * @param {string} minterSeed - seed of wallet storing NFTs from selected event
    * @param {string} TokenID - ID for NFT that should be claimed
-   * @returns {string} offerToAccept - Sell offer for given NFT from selected event
+   * @returns {object} - The metadata of the sell offer for a given NFT from selected event
+   * @throws {Error} - If any of the required parameters are missing or if there is an issue creating the sell offer
    */
-  async createSellOfferForClaim(buyer, sellerseed, TokenID) {
+  async createSellOfferForClaim(buyer, minterSeed, TokenID) {
     try {
-      if (!buyer || !sellerseed || !TokenID) throw new Error(`${ERR_PARAMS}`);
-      const seller = xrpl.Wallet.fromSeed(sellerseed);
+      if (!buyer || !minterSeed || !TokenID) throw new Error(`${ERR_PARAMS}`);
+      const seller = xrpl.Wallet.fromSeed(minterSeed);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
       // Preparing transaction data
@@ -127,7 +149,7 @@ class Attendify {
         Account: seller.classicAddress,
         NFTokenID: TokenID,
         Amount: "0",
-        Flags: parseInt(1),
+        Flags: NFTokenCreateOfferFlags.tfSellNFToken,
       };
       transactionBlob.Destination = buyer;
       // Submitting transaction to XRPL
@@ -144,46 +166,83 @@ class Attendify {
         return obj.destination === buyer;
       });
       client.disconnect();
+      const curentEventId = (await xrpl.parseNFTokenID(TokenID)).Taxon;
+      await this.addParticipant(buyer, curentEventId);
       return offerToAccept;
     } catch (error) {
       console.error(error);
-      return error;
+      throw new Error(error);
+      // return error;
     }
   }
 
   /**
-   * Mints NFTs for created event and saves data about event to claimable array
-   * @ToDo Currently there is new temporary wallet created for each event. Eventually it should be possible to give ownership of this wallet to owner of event
-   * @ToDo In the future it should be possible for owner to edit details for event after proving ownership of his wallet by signing a message
+   * Retrieves a list of all tickets owned by a particular address
+   * @param {string} walletAddress - The wallet address to check
+   * @param {object} client - The XRPL client to use for the request
+   * @returns {object[]} - An array of tickets owned by the given address. If no tickets are found, returns an empty array
+   */
+  async getAccountTickets(walletAddress, client) {
+    let res = await client.request({
+      command: "account_objects",
+      account: walletAddress,
+      type: "ticket",
+    });
+    let resTickets = res.result.account_objects;
+    for (;;) {
+      console.log("marker, ", res["result"]["marker"]);
+      if (res["result"]["marker"] === undefined) {
+        return resTickets;
+      }
+      res = await client.request({
+        method: "account_objects",
+        account: walletAddress,
+        type: "ticket",
+        marker: res["result"]["marker"],
+      });
+      console.log(res.result.account_objects.length);
+      return resTickets.concat(res.result.account_objects);
+    }
+  }
+
+  /**
+   * Mints NFTs for created event and saves IPFS hash with data about event to Uri field
    * @param {string} walletAddress - Account of user requesting creation of event
    * @param {integer} nftokenCount - Amount of NFTs that should be minted for event
    * @param {string} url - IPFS hash with metadata for NFT
    * @param {string} title - Name of event
-   * @returns {object} claimable[curentEventId] - Contains data related to new event for which NFTs were minted
+   * @param {string} minterSeed - The seed of the wallet that will be minting the NFTs
+   * @param {number} curentEventId - The event ID of the NFTs. Defaults to the next event ID in the sequence
+   * @returns {object} - An object containing the metadata related to new event for which NFTs were minted
+   * @throws {Error} - If any of the required parameters are missing or if there is an issue minting the NFTs
    */
-  async batchMint(walletAddress, nftokenCount, url, title) {
+  async batchMint(
+    walletAddress,
+    nftokenCount,
+    url,
+    title,
+    minterSeed,
+    curentEventId = this.nextEventId
+  ) {
     try {
       if (!walletAddress || !nftokenCount || !url || !title)
         throw new Error(`${ERR_PARAMS}`);
       const client = new xrpl.Client(process.env.SELECTED_NETWORK);
       await client.connect();
-      const fund_result = await client.fundWallet();
-      const vaultWallet = fund_result.wallet;
-      let curentEventId;
+      const vaultWallet = xrpl.Wallet.fromSeed(minterSeed);
       let remainingTokensBeforeTicketing = nftokenCount;
-      console.log("a");
       for (let currentTickets; remainingTokensBeforeTicketing != 0; ) {
-        console.log("b, ", remainingTokensBeforeTicketing);
-        console.log(
-          "current tickets ",
-          await client.request({
-            command: "account_objects",
-            account: vaultWallet.address,
-            type: "ticket",
-          })
+        let maxTickets =
+          250 -
+          (await this.getAccountTickets(vaultWallet.address, client)).length;
+        console.log("Max tickets", maxTickets);
+        if (maxTickets == 0) throw new Error(`${ERR_XRPL}`);
+        const balanceForTickets = parseInt(
+          ((await client.getXrpBalance(vaultWallet.address)) - 1) / 2
         );
-        if (remainingTokensBeforeTicketing > 250) {
-          currentTickets = 250;
+        if (balanceForTickets < maxTickets) maxTickets = balanceForTickets;
+        if (remainingTokensBeforeTicketing > maxTickets) {
+          currentTickets = maxTickets;
         } else {
           currentTickets = remainingTokensBeforeTicketing;
         }
@@ -194,7 +253,6 @@ class Attendify {
         });
         let my_sequence = account_info.result.account_data.Sequence;
         // Create the transaction hash.
-        console.log("b, ", currentTickets);
         const ticketTransaction = await client.autofill({
           TransactionType: "TicketCreate",
           Account: vaultWallet.address,
@@ -205,29 +263,10 @@ class Attendify {
         const signedTransaction = vaultWallet.sign(ticketTransaction);
         // Submit the transaction and wait for the result.
         const tx = await client.submitAndWait(signedTransaction.tx_blob);
-        let res = await client.request({
-          command: "account_objects",
-          account: vaultWallet.address,
-          type: "ticket",
-        });
-        let resTickets = res.result.account_objects;
-        console.log(resTickets.length);
-        for (;;) {
-          console.log("marker, ", res["result"]["marker"]);
-          if (res["result"]["marker"] === undefined) {
-            break;
-          }
-
-          res = await client.request({
-            method: "account_objects",
-            account: vaultWallet.address,
-            type: "ticket",
-            marker: res["result"]["marker"],
-          });
-          console.log(res.result.account_objects.length);
-          resTickets = resTickets.concat(res.result.account_objects);
-        }
-        console.log("tickets amount ", resTickets.length);
+        let resTickets = await this.getAccountTickets(
+          vaultWallet.address,
+          client
+        );
         // Populate the tickets array variable.
         let tickets = [];
         for (let i = 0; i < currentTickets; i++) {
@@ -235,17 +274,17 @@ class Attendify {
           tickets[i] = resTickets[i].TicketSequence;
         }
         // Mint NFTokens
-        curentEventId = this.claimable.length;
         for (let i = 0; i < currentTickets; i++) {
-          console.log("minting ", i);
+          console.log("minting ", i + 1, "/", nftokenCount, " NFTs");
           const transactionBlob = {
             TransactionType: "NFTokenMint",
             Account: vaultWallet.classicAddress,
             URI: xrpl.convertStringToHex(url),
-            Flags: {
+            Flags: NFTokenMintFlags.tfTransferable,
+            /*{
               tfBurnable: true,
               tfTransferable: true,
-            },
+            },*/
             TransferFee: parseInt(0),
             Sequence: 0,
             TicketSequence: tickets[i],
@@ -260,19 +299,16 @@ class Attendify {
         remainingTokensBeforeTicketing -= currentTickets;
       }
       client.disconnect();
-      // Save the info about newest event in claimable array
-      await this.claimable.push({
+      this.nextEventId++;
+      await this.addParticipant(undefined, curentEventId);
+      return {
         id: curentEventId,
         account: vaultWallet.classicAddress,
         owner: walletAddress,
         URI: url,
         title: title,
         claimable: nftokenCount,
-        remaining: nftokenCount,
-        participants: [],
-      });
-      await this.claimableAdresses.push(vaultWallet);
-      return this.claimable[curentEventId];
+      };
     } catch (error) {
       console.error(error);
       throw new Error(error);
@@ -281,16 +317,17 @@ class Attendify {
   }
 
   /**
-   * Verifies whether or not walletAddress account is owner of NFT with nftId
+   * Verifies whether or not walletAddress account is owner of NFT from event with eventId that was issued by wallet that matches minter parameter
    * * Wallet from signature has to match walletAddress
    * @param {string} walletAddress - Address of wallet for the user wanting to verify
-   * @param {string} nftId - id of NFT for which ownership should be verified
    * @param {string} signature - Signature that should be signed by the same account as walletAddress
-   * @returns {boolean} Depending on whether or not walletAddress is owner of the NFT
+   * @param {string} minter - The address of the wallet that minted the NFT.
+   * @param {number} eventId - The event ID of the NFT.
+   * @returns {boolean} Indicats whether the walletAddress owns any NFT from particular event
    */
-  async verifyOwnership(walletAddress, nftId, signature) {
+  async verifyOwnership(walletAddress, signature, minter, eventId) {
     try {
-      if (!walletAddress || !nftId || !signature)
+      if (!walletAddress || !signature || !minter || !eventId)
         throw new Error(`${ERR_PARAMS}`);
       const verifySignatureResult = verifySignature(signature);
       // Checking if signature is valid and if user from signature is walletAddress
@@ -301,12 +338,14 @@ class Attendify {
         throw new Error(`${ERR_PARAMS}`);
       let NftToVerify;
       // Getting user NFTs
-      const accountNfts = await (
-        await this.getBatchNFTokens(walletAddress)
-      ).result.account_nfts;
+      const accountNfts = await await this.getBatchNFTokens(
+        walletAddress,
+        eventId
+      );
       if (accountNfts.length == 0) return false;
       for (let i = 0; i != accountNfts.length; i++) {
-        if (accountNfts[i].NFTokenID == nftId) {
+        console.log(accountNfts[i].Issuer);
+        if (accountNfts[i].Issuer == minter) {
           NftToVerify = accountNfts[i];
           return true;
         }
@@ -321,19 +360,23 @@ class Attendify {
   /**
    * Looks up the list of users that started process of claiming the NFT
    * @ToDo Add permissions to configure who can access the list of participants
-   * @param {string} eventId - Id of selected claim event
-   * @returns {array} selectedClaimEvent.participants - List of users that requested to participate in event
+   * @param {string} minter - The wallet address of the event creator
+   * @param {string} eventId - ID of selected claim event
+   * @returns {array[]} An array of objects with data for users that requested to participate in event
+   * @throws {Error} If the `minter` or `eventId` parameters are not provided.
+   * @throws {Error} If the event does not exist
    */
-  async attendeesLookup(eventId) {
+  async attendeesLookup(minter, eventId) {
     try {
-      if (!eventId) throw new Error(`${ERR_PARAMS}`);
+      if (!minter || !eventId) throw new Error(`${ERR_PARAMS}`);
       // Find selected event
-      let selectedClaimEvent = this.claimable.find((obj) => {
-        return this.claimableAdresses[obj.id].classicAddress == eventId;
-      });
-      if (!selectedClaimEvent) throw new Error(`${ERR_ATTENDIFY}`);
+      let data = await fs.promises.readFile("participants.json", "utf-8");
+      let participantsJson = JSON.parse(data.toString());
+      console.log(data);
+      const attendees = participantsJson.data[eventId];
+      if (!attendees) throw new Error(`${ERR_ATTENDIFY}`);
       // Retrieve and return participants from claimable array
-      return selectedClaimEvent.participants;
+      return attendees;
     } catch (error) {
       console.error(error);
       return error;
