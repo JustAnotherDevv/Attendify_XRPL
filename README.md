@@ -75,6 +75,7 @@ Project was firstly developed during [XRPL NFT hackathon.](https://devpost.com/s
 ⚫ `/api/attendees` - Looks up attendees for event with specific id
 
 **@param {string} minter** - The minter address of the event
+
 **@param {string} eventId** - The ID of the event
 
 ## ToDo
